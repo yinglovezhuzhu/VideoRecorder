@@ -1,0 +1,28 @@
+<resources>
+    <!-- 标题栏 -->
+    <dimen name="yuninfo_title_textSize">20sp</dimen>
+    <dimen name="yuninfo_title_button_minSize">45dip</dimen>
+    
+    <dimen name="yuninfo_video_thumb_height">200dip</dimen>
+    <dimen name="yuninfo_video_upload_progress_height">5dip</dimen>
+    <dimen name="yuninfo_content_padding">8dip</dimen>
+    <dimen name="yuninfo_content_textSize">16sp</dimen>
+    <dimen name="yuninfo_input_content_padding">5dip</dimen>
+    <dimen name="yuninfo_send_button_margingTop">15dip</dimen>
+    <dimen name="yuninfo_send_button_textSize">18sp</dimen>
+
+    <dimen name="yuninfo_video_bar_padding">5dip</dimen>
+    <dimen name="yuninfo_videw_bar_button_minHeight">40dip</dimen>
+    <dimen name="yuninfo_video_preview_width">300dip</dimen>
+    <dimen name="yuninfo_video_preview_height">400dip</dimen>
+    
+    <!-- 对话框 -->
+    <dimen name="yuninfo_menu_dialog_content_padding_vertical">20dip</dimen>
+	<dimen name="yuninfo_menu_dialog_content_padding_horizontal">20dip</dimen>
+	<dimen name="yuninfo_menu_dialog_menu_divider_height">12dip</dimen>
+	<dimen name="yuninfo_menu_dialog_menu_negative_marging">25dip</dimen>
+	
+	<dimen name="yuninfo_menu_dialog_menu_item_minHeight">35dip</dimen>
+	<dimen name="yuninfo_menu_dialog_menu_item_textSize">18sp</dimen>
+
+</resources>

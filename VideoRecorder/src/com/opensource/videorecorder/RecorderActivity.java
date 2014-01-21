@@ -22,6 +22,9 @@ package com.opensource.videorecorder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.Collections;
+import java.util.Comparator;
+import java.util.List;
 
 import android.annotation.SuppressLint;
 import android.app.AlertDialog;
@@ -29,6 +32,8 @@ import android.content.DialogInterface;
 import android.content.Intent;
 import android.content.res.Resources;
 import android.hardware.Camera;
+import android.hardware.Camera.Size;
+import android.media.CamcorderProfile;
 import android.media.MediaRecorder;
 import android.os.Build;
 import android.os.Bundle;
@@ -75,6 +80,8 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 	private Resources mResources;
 	private String mPackageName;
 	
+	private List<Size> mSupportVideoSizes;
+	
 	
 	@Override
 	protected void onCreate(Bundle savedInstanceState) {
@@ -82,6 +89,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 		
 		mResources = getResources();
 		mPackageName = getPackageName();
+		
 		
 		int layoutId = mResources.getIdentifier("yuninfo_activity_video_recorder", "layout", mPackageName);
 		setContentView(layoutId);
@@ -159,9 +167,6 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 		public void handleMessage(android.os.Message msg) {
 			switch (msg.what) {
 			case Config.YUNINFO_ID_TIME_COUNT:
-//				if(msg.arg1 > 1) {
-//					mButton.setEnabled(true);
-//				}
 				if(mIsRecording) {
 					if(msg.arg1 > msg.arg2) {
 //					mTvTimeCount.setVisibility(View.INVISIBLE);
@@ -221,7 +226,12 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 			this.mCamera = Camera.open();
 			Camera.Parameters parameters = mCamera.getParameters();
 			parameters.setRotation(90);
-			parameters.set("orientation", "portrait");
+			mSupportVideoSizes = parameters.getSupportedVideoSizes();
+			for (Size size : mSupportVideoSizes) {
+				System.out.println(size.width + "<>" + size.height);
+			}
+			
+//			parameters.set("orientation", "portrait");
 //			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 			mCamera.setParameters(parameters);
 			mCamera.lock();
@@ -247,31 +257,120 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 		LogUtil.i("Camera", mCamera);
 		LogUtil.i("Camera", mMediaRecorder);
 		mMediaRecorder.setCamera(mCamera);
+		
 		// Step 2: Set sources
-		mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-		mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+		try {
+			mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
+			mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+		} catch (Exception e) {
+			mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+			mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
+			e.printStackTrace();
+		}
 
-		try {
-			mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.MPEG_4);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.AAC);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.MPEG_4_SP);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
-		try {
-			mMediaRecorder.setVideoSize(640, 480); // Its is not on android docs but
-			// it needs to be done. (640x480
-			// = VGA resolution)
-		} catch (Exception e) {
-			e.printStackTrace();
+		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.FROYO) {
+			try {
+				CamcorderProfile lowProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_LOW);
+				CamcorderProfile hightProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+				if(lowProfile != null && hightProfile != null) {
+					int audioBitRate = lowProfile.audioBitRate > 128000 ? 128000 : lowProfile.audioBitRate;
+					lowProfile.audioBitRate = audioBitRate > hightProfile.audioBitRate ? hightProfile.audioBitRate : audioBitRate;
+					lowProfile.audioSampleRate = 48000 > hightProfile.audioSampleRate ? hightProfile.audioSampleRate : 48000;
+					lowProfile.duration = 20 > hightProfile.duration ? hightProfile.duration : 20;
+					lowProfile.videoFrameRate = 20 > hightProfile.videoFrameRate ? hightProfile.videoFrameRate : 20;
+					lowProfile.videoBitRate = 1500000 > hightProfile.videoBitRate ? hightProfile.videoBitRate : 1500000;;
+					if(mSupportVideoSizes != null && !mSupportVideoSizes.isEmpty()) {
+						int width = 640;
+						int height = 480;
+						Collections.sort(mSupportVideoSizes, new SizeComparator());
+						int lwd = mSupportVideoSizes.get(0).width;
+						for (Size size : mSupportVideoSizes) {
+							int wd = Math.abs(size.width - 640);
+							if(wd < lwd) {
+								width = size.width;
+								height = size.height;
+								lwd = wd;
+							} else {
+								break;
+							}
+						}
+						lowProfile.videoFrameWidth = width;
+						lowProfile.videoFrameHeight = height;
+					}
+//					System.out.println(lowProfile.audioBitRate);
+//					System.out.println(lowProfile.audioChannels);
+//					System.out.println(lowProfile.audioCodec);
+//					System.out.println(lowProfile.audioSampleRate);
+//					System.out.println(lowProfile.duration);
+//					System.out.println(lowProfile.fileFormat);
+//					System.out.println(lowProfile.quality);
+//					System.out.println(lowProfile.videoBitRate);
+//					System.out.println(lowProfile.videoCodec);
+//					System.out.println(lowProfile.videoFrameHeight);
+//					System.out.println(lowProfile.videoFrameWidth);
+//					System.out.println(lowProfile.videoFrameRate);
+
+					mMediaRecorder.setProfile(lowProfile);
+				}
+			} catch (Exception e) {
+				try {
+					mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+				} catch (Exception ex) {
+					e.printStackTrace();
+				}
+				try {
+					mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
+				} catch (Exception ex) {
+					e.printStackTrace();
+				}
+				if(mSupportVideoSizes != null && !mSupportVideoSizes.isEmpty()) {
+					Collections.sort(mSupportVideoSizes, new SizeComparator());
+					Size size = mSupportVideoSizes.get(0);
+					try {
+						mMediaRecorder.setVideoSize(size.width, size.height);
+					} catch (Exception ex) {
+						e.printStackTrace();
+					}
+				} else {
+					try {
+						mMediaRecorder.setVideoSize(640, 480); // Its is not on android docs but
+						// it needs to be done. (640x480
+						// = VGA resolution)
+					} catch (Exception ex) {
+						e.printStackTrace();
+					}
+				}
+				e.printStackTrace();
+			}
+		} else {
+			try {
+				mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			try {
+				mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
+			} catch (Exception e) {
+				e.printStackTrace();
+			}
+			if(mSupportVideoSizes != null && !mSupportVideoSizes.isEmpty()) {
+				Collections.sort(mSupportVideoSizes, new SizeComparator());
+				Size size = mSupportVideoSizes.get(0);
+				try {
+					mMediaRecorder.setVideoSize(size.width, size.height);
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			} else {
+				try {
+					mMediaRecorder.setVideoSize(640, 480); // Its is not on android docs but
+					// it needs to be done. (640x480
+					// = VGA resolution)
+				} catch (Exception e) {
+					e.printStackTrace();
+				}
+			}
+
 		}
 			
 		// Step 4: Set output file
@@ -282,12 +381,6 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 		// Step 5: Set the preview output
 		mMediaRecorder.setPreviewDisplay(mSurfaceHolder.getSurface());
 		
-//		mMediaRecorder.setVideoFrameRate(20);
-		try {
-			mMediaRecorder.setMaxDuration(Config.YUNINFO_MAX_VIDEO_DURATION);
-		} catch (Exception e) {
-			e.printStackTrace();
-		}
 		if(Build.VERSION.SDK_INT >= Build.VERSION_CODES.GINGERBREAD) {
 			try {
 				mMediaRecorder.setOrientationHint(90);
@@ -296,6 +389,7 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 			}
 		}
 
+		
 		// Step 6: Prepare configured MediaRecorder
 		try {
 			mMediaRecorder.prepare();
@@ -428,5 +522,14 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 			return true;
 		}
 		return super.onKeyDown(keyCode, event);
+	}
+	
+	
+	private class SizeComparator implements Comparator<Size> {
+
+		@Override
+		public int compare(Size lhs, Size rhs) {
+			return rhs.width - lhs.width;
+		}
 	}
 }

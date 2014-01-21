@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+	<string name="yuninfo_app_name">VideoExtand</string>
+
+	<string name="yuninfo_view_descreption">Image View</string>
+	
+	<string name="yuninfo_ok">确定</string>
+	<string name="yuninfo_cancel">取消</string>
+	
+	<string name="yuninfo_video_card_title">发送视频贺卡(体验版)</string>
+	<string name="yuninfo_add_video">添加视频</string>
+	<string name="yuninfo_wish_hint">请输入祝福语&#8230;</string>
+	<string name="yuninfo_contact_hint">选择联系人</string>
+	<string name="yuninfo_send">发送</string>
+	<string name="yuninfo_see_video">观看视频</string>
+	<string name="yuninfo_send_video_back">给Ta发视频</string>
+	<string name="yuninfo_upload_start">正在上传视频&#8230;</string>
+	<string name="yuninfo_upload_success">视频上传完成</string>
+	
+	<!-- 插件调用信息 -->
+	<string name="yuninfo_userid_null">请传入userId信息</string>
+	<string name="yuninfo_appid_null">请传入appId信息</string>
+	<string name="yuninfo_appsecret_null">请传入appSecret信息</string>
+	<string name="yuninfo_version_null">请传入version信息</string>
+	<string name="yuninfo_clienttype_null">请传入clientType信息</string>
+	
+	<string name="yuninfo_cacheing_msg">正努力加载中&#8230;</string>
+	<string name="yuninfo_feedbak_msg_hint">看完视频有什么想对你的好友说&#8230;</string>
+	
+</resources>

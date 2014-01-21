@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    
+    <color name="yuninfo_transparent">#00FFFFFF</color>
+    
+    <color name="yuninfo_white">#FFFFFFFF</color>
+    
+    <color name="yuninfo_hint_color">#FFA8A8A8</color>
+    <color name="yuninfo_text_color_black">#FF333333</color>
+    <color name="yuninfo_black_shadow">#CC000000</color>
+    <color name="yuninfo_white_shadow">#CCFFFFFF</color>
+    <color name="yuninfo_text_color_white">#FFF3F3F3</color>
+    
+    <color name="yuninfo_popup_divider">#AAC1C1C1</color>
+    <color name="yuninfo_content_bg">#FFE9E9E9</color>
+    <color name="yuninfo_title_bg">#FFC21A0E</color>
+    
+    <color name="yuninfo_video_bar_bg">#FF242424</color>
+    <color name="yuninfo_video_content_bg">#FF393939</color>
+</resources>

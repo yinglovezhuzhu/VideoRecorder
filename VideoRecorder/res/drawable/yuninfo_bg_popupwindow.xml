@@ -1,0 +1,14 @@
+<?xml version="1.0" encoding="utf-8"?>
+<shape xmlns:android="http://schemas.android.com/apk/res/android"
+    android:shape="rectangle" >
+    
+    <corners android:radius="1dip" />
+    <padding android:left="@dimen/yuninfo_content_padding"
+        android:top="@dimen/yuninfo_content_padding"
+        android:right="@dimen/yuninfo_content_padding"
+        android:bottom="@dimen/yuninfo_content_padding"/>
+    <solid android:color="@color/yuninfo_white" />
+    
+    <stroke android:width="1dip" android:color="#88C1C1C1" />
+
+</shape>

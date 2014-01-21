@@ -1,0 +1,20 @@
+<?xml version="1.0" encoding="utf-8"?>
+<resources>
+    <string-array name="yuninfo_default_wish_list">
+        <item>新年快乐！</item>
+        <item>万事如意！</item>
+        <item>生意兴隆！</item>
+        <item>身体健康！</item>
+        <item>龙马精神！</item>
+    </string-array>
+    
+    <string-array name="yuninfo_add_video_menu">
+        <item>拍摄视频</item>
+        <item>本地视频</item>
+    </string-array>
+
+    <string-array name="yuninfo_video_menu">
+        <item>播放视频</item>
+        <item>更换视频</item>
+    </string-array>
+</resources>
