@@ -22,11 +22,13 @@ package com.opensource.videorecorder;
 
 import java.io.File;
 import java.io.IOException;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.List;
 
 import android.annotation.SuppressLint;
+import android.app.Activity;
 import android.app.AlertDialog;
 import android.content.DialogInterface;
 import android.content.Intent;
@@ -42,6 +44,7 @@ import android.os.Handler;
 import android.os.Message;
 import android.util.Log;
 import android.view.KeyEvent;
+import android.view.Surface;
 import android.view.SurfaceHolder;
 import android.view.SurfaceView;
 import android.view.View;
@@ -138,9 +141,8 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 				@Override
 				public void onClick(DialogInterface dialog, int which) {
 					stopRecord();
-					if(mOutputFile != null && mOutputFile.exists()) {
-						mOutputFile.delete();
-						mOutputFile = null;
+					if(resultCode == RESULT_CANCELED) {
+						deleteFile(mOutputFile);
 					}
 					setResult(resultCode, data);
 					finish();
@@ -156,8 +158,28 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 			}).show();
 			return;
 		}
+		if(resultCode == RESULT_CANCELED) {
+			deleteFile(mOutputFile);
+		}
 		setResult(resultCode, data);
 		finish();
+	}
+	
+	private void deleteFile(File delFile) {
+		if(delFile == null) {
+			return;
+		}
+		final File file = new File(delFile.getAbsolutePath());
+		delFile = null;
+		new Thread() {
+			@Override
+			public void run() {
+				super.run();
+				if(file.exists()) {
+					file.delete();
+				}
+			}
+		}.start();
 	}
 	
 	@SuppressLint("HandlerLeak")
@@ -226,12 +248,8 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 			this.mCamera = Camera.open();
 			Camera.Parameters parameters = mCamera.getParameters();
 			parameters.setRotation(90);
-			mSupportVideoSizes = parameters.getSupportedVideoSizes();
-			for (Size size : mSupportVideoSizes) {
-				System.out.println(size.width + "<>" + size.height);
-			}
-			
-//			parameters.set("orientation", "portrait");
+			System.out.println(parameters.flatten());
+			parameters.set("orientation", "portrait");
 //			parameters.setFocusMode(Camera.Parameters.FOCUS_MODE_AUTO);
 			mCamera.setParameters(parameters);
 			mCamera.lock();
@@ -242,8 +260,29 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 					e.printStackTrace();
 				}
 			}
+			mSupportVideoSizes = parameters.getSupportedVideoSizes();
+			if(mSupportVideoSizes == null || mSupportVideoSizes.isEmpty()) {  //For some device can't get supported video size
+				String videoSize = parameters.get("video-size");
+				LogUtil.i(TAG, videoSize);
+				mSupportVideoSizes = new ArrayList<Camera.Size>();
+				if(!StringUtil.isEmpty(videoSize)) {
+					String [] size = videoSize.split("x");
+					if(size.length > 1) {
+						try {
+							int width = Integer.parseInt(size[0]);
+							int height = Integer.parseInt(size[1]);
+							mSupportVideoSizes.add(mCamera.new Size(width, height));
+						} catch (Exception e) {
+							LogUtil.e(TAG, e.toString());
+						}
+					}
+				}
+			}
+			for (Size size : mSupportVideoSizes) {
+				LogUtil.i(TAG, size.width + "<>" + size.height);
+			}
 		} catch (Exception e) {
-			LogUtil.e(TAG, "Open Camera error\n" + e);
+			LogUtil.e(TAG, "Open Camera error\n" + e.toString());
 		}
 	}
 	
@@ -260,8 +299,8 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 		
 		// Step 2: Set sources
 		try {
-			mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.MIC);
-			mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+			mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
+			mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
 		} catch (Exception e) {
 			mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.DEFAULT);
 			mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.DEFAULT);
@@ -276,8 +315,10 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 					int audioBitRate = lowProfile.audioBitRate > 128000 ? 128000 : lowProfile.audioBitRate;
 					lowProfile.audioBitRate = audioBitRate > hightProfile.audioBitRate ? hightProfile.audioBitRate : audioBitRate;
 					lowProfile.audioSampleRate = 48000 > hightProfile.audioSampleRate ? hightProfile.audioSampleRate : 48000;
-					lowProfile.duration = 20 > hightProfile.duration ? hightProfile.duration : 20;
-					lowProfile.videoFrameRate = 20 > hightProfile.videoFrameRate ? hightProfile.videoFrameRate : 20;
+//					lowProfile.duration = 20 > hightProfile.duration ? hightProfile.duration : 20;
+//					lowProfile.videoFrameRate = 20 > hightProfile.videoFrameRate ? hightProfile.videoFrameRate : 20;
+					lowProfile.duration = hightProfile.duration;
+					lowProfile.videoFrameRate = hightProfile.videoFrameRate;
 					lowProfile.videoBitRate = 1500000 > hightProfile.videoBitRate ? hightProfile.videoBitRate : 1500000;;
 					if(mSupportVideoSizes != null && !mSupportVideoSizes.isEmpty()) {
 						int width = 640;
@@ -297,18 +338,18 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 						lowProfile.videoFrameWidth = width;
 						lowProfile.videoFrameHeight = height;
 					}
-//					System.out.println(lowProfile.audioBitRate);
-//					System.out.println(lowProfile.audioChannels);
-//					System.out.println(lowProfile.audioCodec);
-//					System.out.println(lowProfile.audioSampleRate);
-//					System.out.println(lowProfile.duration);
-//					System.out.println(lowProfile.fileFormat);
-//					System.out.println(lowProfile.quality);
-//					System.out.println(lowProfile.videoBitRate);
-//					System.out.println(lowProfile.videoCodec);
-//					System.out.println(lowProfile.videoFrameHeight);
-//					System.out.println(lowProfile.videoFrameWidth);
-//					System.out.println(lowProfile.videoFrameRate);
+					System.out.println(lowProfile.audioBitRate);
+					System.out.println(lowProfile.audioChannels);
+					System.out.println(lowProfile.audioCodec);
+					System.out.println(lowProfile.audioSampleRate);
+					System.out.println(lowProfile.duration);
+					System.out.println(lowProfile.fileFormat);
+					System.out.println(lowProfile.quality);
+					System.out.println(lowProfile.videoBitRate);
+					System.out.println(lowProfile.videoCodec);
+					System.out.println(lowProfile.videoFrameHeight);
+					System.out.println(lowProfile.videoFrameWidth);
+					System.out.println(lowProfile.videoFrameRate);
 
 					mMediaRecorder.setProfile(lowProfile);
 				}
@@ -402,6 +443,38 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 			releaseMediaRecorder();
 			return false;
 		}
+//		 mMediaRecorder.setCamera(mCamera);
+//
+//	        mMediaRecorder.setAudioSource(MediaRecorder.AudioSource.CAMCORDER);
+//	        mMediaRecorder.setVideoSource(MediaRecorder.VideoSource.CAMERA);
+//	        if (Build.VERSION.SDK_INT < Build.VERSION_CODES.HONEYCOMB) {
+//
+//	            mMediaRecorder.setOutputFormat(MediaRecorder.OutputFormat.DEFAULT);
+//	            mMediaRecorder.setAudioEncoder(MediaRecorder.AudioEncoder.DEFAULT);
+//	            mMediaRecorder.setVideoEncoder(MediaRecorder.VideoEncoder.DEFAULT);
+//
+//	        } else {
+//	        	CamcorderProfile camcorderProfile = CamcorderProfile.get(CamcorderProfile.QUALITY_HIGH);
+//	        	mMediaRecorder.setProfile(camcorderProfile);
+//
+//	            mMediaRecorder.setVideoSize(720, 480);
+//	        }
+//
+//	        mOutputFile = new File(Environment.getExternalStorageDirectory(), "Video_" 
+//					+ DateUtil.getSystemDate("yyyy_MM_dd_HHmmss") + ".mp4");
+//			mMediaRecorder.setOutputFile(mOutputFile.getAbsolutePath());
+//	        mMediaRecorder.setMaxDuration(60000);
+//	        mMediaRecorder.setPreviewDisplay(mSurfaceHolder.getSurface());
+//
+//	        try {
+//	            mMediaRecorder.prepare();
+//	        } catch (IllegalStateException e) {
+//	            releaseMediaRecorder();
+//	            return false;
+//	        } catch (IOException e) {
+//	            releaseMediaRecorder();
+//	            return false;
+//	        }
 		return true;
 	}
 	
@@ -470,6 +543,35 @@ public class RecorderActivity extends BaseActivity implements SurfaceHolder.Call
 		mIbtnCancel.setVisibility(View.VISIBLE);
 		mIbtnOk.setVisibility(View.VISIBLE);
 	}
+	
+	/**
+	 * 
+	 * @param activity
+	 * @param cameraId
+	 * @param camera
+	 */
+	@SuppressLint("NewApi")
+	public static void setCameraDisplayOrientation(Activity activity, int cameraId, Camera camera) {
+	     Camera.CameraInfo info = new Camera.CameraInfo(); //Since API level 9
+	     Camera.getCameraInfo(cameraId, info);
+	     int rotation = activity.getWindowManager().getDefaultDisplay().getRotation();
+	     int degrees = 0;
+	     switch (rotation) {
+	         case Surface.ROTATION_0: degrees = 0; break;
+	         case Surface.ROTATION_90: degrees = 90; break;
+	         case Surface.ROTATION_180: degrees = 180; break;
+	         case Surface.ROTATION_270: degrees = 270; break;
+	     }
+
+	     int result;
+	     if (info.facing == Camera.CameraInfo.CAMERA_FACING_FRONT) {
+	         result = (info.orientation + degrees) % 360;
+	         result = (360 - result) % 360;  // compensate the mirror
+	     } else {  // back-facing
+	         result = (info.orientation - degrees + 360) % 360;
+	     }
+	     camera.setDisplayOrientation(result);
+	 }
 	
 	@Override
 	protected void onResume() {
